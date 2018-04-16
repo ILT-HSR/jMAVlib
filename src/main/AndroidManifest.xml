@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="me.drton.jmavlib"
-  android:versionCode="1"
-  android:versionName="1.0">
+    package="me.drton.jmavlib"
+    android:versionCode="1"
+    android:versionName="1.0">
 
-  <application/>
+    <application>
+        <provider
+            android:authorities="${applicationId}.jmavlibinitprovider"
+            android:exported="false"
+            android:enabled="true"
+            android:name=".internal.JMAVLibInitProvider" />
+    </application>
 
 </manifest>
