@@ -44,12 +44,22 @@ fun newMAVLinkHeartbeat(): MAVLinkMessage {
     return heartbeat
 }
 
+/**
+ * Create a new MAVLink 'Arm' message
+ *
+ * @return a new MAVLink 'Long Command' message containing an 'Arm' message
+ */
 fun newArmMessage(): MAVLinkMessage {
     val msg = newArmDisarmMessage()
     msg.set("param1", 1)
     return msg
 }
 
+/**
+ * Create a new MAVLink 'Disarm' message
+ *
+ * @return a new MAVLink 'Long Command' message containing an 'Disarm' message
+ */
 fun newDisarmMessage(): MAVLinkMessage {
     val msg = newArmDisarmMessage()
     msg.set("param1", 0)
