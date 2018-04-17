@@ -43,3 +43,30 @@ fun newMAVLinkHeartbeat(): MAVLinkMessage {
 
     return heartbeat
 }
+
+fun newArmMessage(): MAVLinkMessage {
+    val msg = newArmDisarmMessage()
+    msg.set("param1", 1)
+    return msg
+}
+
+fun newDisarmMessage(): MAVLinkMessage {
+    val msg = newArmDisarmMessage()
+    msg.set("param1", 0)
+    return msg
+}
+
+private fun newArmDisarmMessage(): MAVLinkMessage {
+    val msg = newMAVLinkMessage("COMMAND_LONG", 8, 250)
+    msg.set("target_system", 1)
+    msg.set("target_component", 0)
+    msg.set("command", 400)
+    msg.set("confirmation", 0)
+    msg.set("param2", 0)
+    msg.set("param3", 0)
+    msg.set("param4", 0)
+    msg.set("param5", 0)
+    msg.set("param6", 0)
+    msg.set("param7", 0)
+    return msg
+}
