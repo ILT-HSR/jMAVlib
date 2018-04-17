@@ -14,7 +14,7 @@ class MAVLinkMessageTest {
         @BeforeClass
         @JvmStatic
         fun setupClass() {
-            MAVLINK_SCHEMA_COMMON = MAVLinkSchema(MAVLinkMessageTest::class.java.classLoader.getResourceAsStream("assets/common.xml"))
+            MAVLINK_SCHEMA_COMMON = MAVLinkSchema(MAVLinkMessageTest::class.java.classLoader.getResourceAsStream("common.xml"))
         }
     }
 
