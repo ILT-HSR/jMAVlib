@@ -5,13 +5,7 @@ import android.util.Log
 
 private val TAG = MAVLinkSchemaRegistry::class.simpleName
 
-class MAVLinkSchemaRegistry private constructor() {
-
-    private object InstanceHolder { val INSTANCE = MAVLinkSchemaRegistry() }
-
-    companion object {
-        val instance: MAVLinkSchemaRegistry by lazy { InstanceHolder.INSTANCE }
-    }
+object MAVLinkSchemaRegistry {
 
     private val fSchemas = HashMap<String, MAVLinkSchema>()
 

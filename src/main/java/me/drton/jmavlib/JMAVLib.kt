@@ -1,6 +1,7 @@
 package me.drton.jmavlib
 
 import me.drton.jmavlib.mavlink.MAVLinkMessage
+import me.drton.jmavlib.mavlink.MAVLinkSchema
 import me.drton.jmavlib.mavlink.MAVLinkSchemaRegistry
 
 private const val MESSAGE_HEARTBEAT = "HEARTBEAT"
@@ -15,22 +16,36 @@ private val Boolean.int get() = if(this) 1 else 0
 /**
  * Create a new MAVLink message
  *
- * @param messageId The MAVLink ID of the message (e.g. "HEARTBEAT")
+ * @param name The MAVLink ID of the message (e.g. "HEARTBEAT")
  * @param system The sender system ID
  * @param component The sender component ID
+ * @param schema The message schema
  *
  * @return A new, empty MAVLink message
  */
-fun createMAVLinkMessage(schema: String = "common", name: String, system: Int, component: Int) =
-        MAVLinkMessage(MAVLinkSchemaRegistry.instance[schema], name, system, component)
+fun createMAVLinkMessage(name: String, system: Int, component: Int, schema: MAVLinkSchema) =
+        MAVLinkMessage(schema, name, system, component)
+
+/**
+ * Create a new MAVLink message
+ *
+ * @param name The MAVLink ID of the message (e.g. "HEARTBEAT")
+ * @param system The sender system ID
+ * @param component The sender component ID
+ * @param schema The name of the message schema
+ *
+ * @return A new, empty MAVLink message
+ */
+fun createMAVLinkMessage(name: String, system: Int, component: Int, schema: String = "common") =
+        MAVLinkSchemaRegistry[schema]?.let { createMAVLinkMessage(name, system, component, it) }
 
 /**
  * Create a new MAVLink 'Heartbeat' message
  *
  * @return A new MAVLink 'Heartbeat' message
  */
-fun createMAVLinkHeartbeat(schema: String = "common", system: Int, component: Int): MAVLinkMessage {
-    val heartbeat = createMAVLinkMessage(schema, MESSAGE_HEARTBEAT, system, component)
+fun createHeartbeatMessage(system: Int, component: Int, schema: MAVLinkSchema): MAVLinkMessage {
+    val heartbeat = createMAVLinkMessage(MESSAGE_HEARTBEAT, system, component, schema)
 
     heartbeat.set("type", 6)
     heartbeat.set("autopilot", 0)
@@ -42,13 +57,54 @@ fun createMAVLinkHeartbeat(schema: String = "common", system: Int, component: In
 }
 
 /**
+ * Create a new MAVLink 'Heartbeat' message
+ *
+ * @return A new MAVLink 'Heartbeat' message
+ */
+fun createHeartbeatMessage(system: Int, component: Int, schema: String = "common") =
+    MAVLinkSchemaRegistry[schema]?.let { createHeartbeatMessage(system, component, it) }
+
+/**
+ * @internal
+ *
+ * Create a new MAVLink 'Long Command' message for arming or disarming the vehicle
+ */
+internal fun newArmDisarmMessage(target: Int, source: Int, component: Int, schema: MAVLinkSchema): MAVLinkMessage {
+    val msg = createMAVLinkMessage(MESSAGE_COMMAND_LONG, source, component, schema)
+    msg.set("target_system", target)
+    msg.set("target_component", 0)
+    msg.set("command", MAVLinkLongCommand.COMPONENT_ARM_DISARM.value)
+    msg.set("confirmation", 0)
+    return msg
+}
+
+/**
  * Create a new MAVLink 'Arm' message
  *
  * @return a new MAVLink 'Long Command' message containing an 'Arm' message
  */
-fun createArmMessage(schema: String = "common", system: Int, component: Int): MAVLinkMessage {
-    val msg = newArmDisarmMessage(schema, system, component)
+fun createArmMessage(target: Int, source: Int, component: Int, schema: MAVLinkSchema): MAVLinkMessage {
+    val msg = newArmDisarmMessage(target, source, component, schema)
     msg.set("param1", true.int)
+    return msg
+}
+
+/**
+ * Create a new MAVLink 'Arm' message
+ *
+ * @return a new MAVLink 'Long Command' message containing an 'Arm' message
+ */
+fun createArmMessage(target: Int, source: Int, component: Int, schema: String = "common") =
+        MAVLinkSchemaRegistry[schema]?.let { createArmMessage(target, source, component, it) }
+
+/**
+ * Create a new MAVLink 'Disarm' message
+ *
+ * @return a new MAVLink 'Long Command' message containing an 'Disarm' message
+ */
+fun createDisarmMessage(target: Int, source: Int, component: Int, schema: MAVLinkSchema): MAVLinkMessage {
+    val msg = newArmDisarmMessage(target, source, component, schema)
+    msg.set("param1", false.int)
     return msg
 }
 
@@ -57,17 +113,5 @@ fun createArmMessage(schema: String = "common", system: Int, component: Int): MA
  *
  * @return a new MAVLink 'Long Command' message containing an 'Disarm' message
  */
-fun createDisarmMessage(schema: String = "common", system: Int, component: Int): MAVLinkMessage {
-    val msg = newArmDisarmMessage(schema, system, component)
-    msg.set("param1", false.int)
-    return msg
-}
-
-private fun newArmDisarmMessage(schema: String = "common", system: Int, component: Int): MAVLinkMessage {
-    val msg = createMAVLinkMessage(schema, MESSAGE_COMMAND_LONG, system, component)
-    msg.set("target_system", 1)
-    msg.set("target_component", 0)
-    msg.set("command", MAVLinkLongCommand.COMPONENT_ARM_DISARM.value)
-    msg.set("confirmation", 0)
-    return msg
-}
+fun createDisarmMessage(target: Int, source: Int, component: Int, schema: String = "common") =
+        MAVLinkSchemaRegistry[schema]?.let { createDisarmMessage(target, source, component, it) }

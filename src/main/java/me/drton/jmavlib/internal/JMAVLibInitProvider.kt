@@ -15,13 +15,12 @@ class JMAVLibInitProvider : ContentProvider() {
     override fun query(uri: Uri?, projection: Array<out String>?, selection: String?, selectionArgs: Array<out String>?, sortOrder: String?): Cursor? = null
 
     override fun onCreate(): Boolean {
-        val registry = MAVLinkSchemaRegistry.instance
 
         context.assets.list(SCHEMAS).forEach {
             val filenameParts = it.split(".")
             when (filenameParts.size) {
                 2 -> {
-                    registry[context, filenameParts[0]] = "$SCHEMAS/$it"
+                    MAVLinkSchemaRegistry[context, filenameParts[0]] = "$SCHEMAS/$it"
                 }
                 else -> Log.e(TAG, "Skipping invalid schema file '$SCHEMAS/$it'")
             }

@@ -36,8 +36,7 @@ private const val ATTRIBUTE_TYPE = "type"
 /**
  * User: ton Date: 03.06.14 Time: 12:31
  */
-class MAVLinkSchema @Throws(ParserConfigurationException::class, IOException::class, SAXException::class)
-constructor(private val fContext: Context, private val fFilename: String) {
+class MAVLinkSchema constructor(private val fContext: Context, private val fFilename: String) {
 
     private val fByteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN
     private val fMessagesById = HashMap<Int, MAVLinkMessageDefinition>()
