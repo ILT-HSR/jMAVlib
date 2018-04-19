@@ -1,5 +1,7 @@
 package me.drton.jmavlib.mavlink;
 
+import android.content.Context;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -27,30 +29,29 @@ public class MAVLinkSchema {
             = new HashMap<String, MAVLinkMessageDefinition>();
     private DocumentBuilder xmlBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 
-    public MAVLinkSchema(InputStream stream) throws ParserConfigurationException, IOException, SAXException {
-        processXMLFile(stream);
+    public MAVLinkSchema(Context context, String filename) throws ParserConfigurationException, IOException, SAXException {
+        processXMLFile(context, filename);
     }
 
     public ByteOrder getByteOrder() {
         return byteOrder;
     }
 
-    private void processXMLFile(InputStream xmlStream) throws IOException, SAXException, ParserConfigurationException {
+    private void processXMLFile(Context context, String filename) throws IOException, SAXException, ParserConfigurationException {
+        File schemaFile = new File(filename);
         xmlBuilder.reset();
-        Document doc = xmlBuilder.parse(xmlStream);
+        Document doc = xmlBuilder.parse(context.getAssets().open(filename));
         doc.getDocumentElement().normalize();
         Element root = doc.getDocumentElement();
         if (!root.getNodeName().equals("mavlink")) {
             throw new RuntimeException("Root element is not <mavlink>");
         }
 
-        // Process includes
-        // TODO: If we need this, we must port to the Android AssetManager
-//        NodeList includeElems = root.getElementsByTagName("include");
-//        for (int i = 0; i < includeElems.getLength(); i++) {
-//            String includeFile = includeElems.item(i).getTextContent();
-//            processXMLFile(new File(xmlFile.getParentFile(), includeFile).getPath());
-//        }
+        NodeList includeElems = root.getElementsByTagName("include");
+        for (int i = 0; i < includeElems.getLength(); i++) {
+            String includeFile = includeElems.item(i).getTextContent();
+            processXMLFile(context, new File(schemaFile.getParentFile(), includeFile).getPath());
+        }
 
         NodeList msgElems = ((Element) root.getElementsByTagName("messages").item(0)).getElementsByTagName("message");
         for (int i = 0; i < msgElems.getLength(); i++) {
