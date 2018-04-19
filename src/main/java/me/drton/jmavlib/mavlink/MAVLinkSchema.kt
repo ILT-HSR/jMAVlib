@@ -11,13 +11,6 @@ import java.io.IOException
 import java.nio.ByteOrder
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.parsers.ParserConfigurationException
-import kotlin.Exception
-import kotlin.Int
-import kotlin.String
-import kotlin.Suppress
-import kotlin.Unit
-import kotlin.let
-import kotlin.Comparator
 
 @Suppress("UNCHECKED_CAST")
 inline fun <T> NodeList.forEach(action: (T) -> Unit) {
@@ -92,6 +85,7 @@ constructor(private val fContext: Context, private val fFilename: String) {
 
                 msg.getElementsByTagName(NODE_FIELD).forEach<Element> { field ->
                     val typeString = field.getAttribute(ATTRIBUTE_TYPE).split("\\[".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                    val name = field.getAttribute(ATTRIBUTE_NAME)
                     val type = MAVLinkDataType.fromCType(typeString[0])
                     val arrayDimension = if(typeString.size > 1) {
                         Integer.parseInt(typeString[1].split("]".toRegex())[0])
