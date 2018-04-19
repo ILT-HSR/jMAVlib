@@ -31,7 +31,7 @@ public class MAVLinkMessage {
      */
     public MAVLinkMessage(MAVLinkSchema schema, int msgID, int systemID, int componentID) {
         this.schema = schema;
-        this.definition = schema.getMessageDefinition(msgID);
+        this.definition = schema.get(msgID);
         if (definition == null) {
             throw new RuntimeException("Unknown mavlink message ID: " + msgID);
         }
@@ -51,7 +51,7 @@ public class MAVLinkMessage {
      */
     public MAVLinkMessage(MAVLinkSchema schema, String msgName, int systemID, int componentID) {
         this.schema = schema;
-        this.definition = schema.getMessageDefinition(msgName);
+        this.definition = schema.get(msgName);
         if (definition == null) {
             throw new RuntimeException("Unknown mavlink message name: " + msgName);
         }
@@ -89,7 +89,7 @@ public class MAVLinkMessage {
         componentID = buffer.get() & 0xff;
         msgID = buffer.get() & 0xff;
         this.schema = schema;
-        this.definition = schema.getMessageDefinition(msgID);
+        this.definition = schema.get(msgID);
         if (definition == null) {
             // Unknown message skip it
             buffer.position(buffer.position() + payloadLen + CRC_LENGTH);
