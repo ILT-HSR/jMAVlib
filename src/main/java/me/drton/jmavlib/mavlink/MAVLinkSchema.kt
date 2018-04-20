@@ -13,7 +13,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.parsers.ParserConfigurationException
 
 @Suppress("UNCHECKED_CAST")
-inline fun <T> NodeList.forEach(action: (T) -> Unit) {
+inline fun <reified T> NodeList.forEach(action: (T) -> Unit) {
     for (index in 0..length) {
         (item(index) as? T)?.let {
             action(it)
@@ -28,6 +28,7 @@ private const val NODE_INCLUDE = "include"
 private const val NODE_MESSAGES = "messages"
 private const val NODE_MESSAGE = "message"
 private const val NODE_FIELD = "field"
+private const val NODE_EXTENSIONS = "extensions"
 
 private const val ATTRIBUTE_ID = "id"
 private const val ATTRIBUTE_NAME = "name"
@@ -82,16 +83,24 @@ class MAVLinkSchema constructor(private val fContext: Context, private val fFile
                 val name = msg.getAttribute(ATTRIBUTE_NAME)
                 val fields = ArrayList<MAVLinkField>()
 
-                msg.getElementsByTagName(NODE_FIELD).forEach<Element> { field ->
-                    val typeString = field.getAttribute(ATTRIBUTE_TYPE).split("\\[".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-                    val name = field.getAttribute(ATTRIBUTE_NAME)
-                    val type = MAVLinkDataType.fromCType(typeString[0])
-                    val arrayDimension = if(typeString.size > 1) {
-                        Integer.parseInt(typeString[1].split("]".toRegex())[0])
-                    } else {
-                        -1
+                var isExtension = false
+                msg.childNodes.forEach<Element> {node ->
+                    if (!isExtension) {
+                        when (node.tagName) {
+                            NODE_FIELD -> {
+                                val typeString = node.getAttribute(ATTRIBUTE_TYPE).split("\\[".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                                val name = node.getAttribute(ATTRIBUTE_NAME)
+                                val type = MAVLinkDataType.fromCType(typeString[0])
+                                val arrayDimension = if (typeString.size > 1) {
+                                    Integer.parseInt(typeString[1].split("]".toRegex())[0])
+                                } else {
+                                    -1
+                                }
+                                fields.add(MAVLinkField(type, arrayDimension, name))
+                            }
+                            NODE_EXTENSIONS -> isExtension = true
+                        }
                     }
-                    fields.add(MAVLinkField(type, arrayDimension, name))
                 }
 
                 fields.sortWith(Comparator { lhs, rhs ->
@@ -102,7 +111,7 @@ class MAVLinkSchema constructor(private val fContext: Context, private val fFile
                     }
                 })
 
-                if(id in 0..255) {
+                if (id in 0..255) {
                     this[id, name] = MAVLinkMessageDefinition(id, name, fields.toTypedArray())
                 }
             }
