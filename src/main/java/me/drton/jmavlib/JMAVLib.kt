@@ -8,6 +8,8 @@ private const val MESSAGE_HEARTBEAT = "HEARTBEAT"
 private const val MESSAGE_COMMAND_LONG = "COMMAND_LONG"
 
 enum class MAVLinkLongCommand(val value: Int) {
+    NAV_TAKEOFF_LOCAL(24),
+    NAV_LOITER_TO_ALT(31),
     COMPONENT_ARM_DISARM(400),
     REQUEST_AUTOPILOT_CAPABILITIES(520),
 }
@@ -133,5 +135,33 @@ fun createDisarmMessage(target: Int, source: Int, component: Int, schema: String
 fun createRequestAutopilotCapabilitiesMessage(target: Int, source: Int, component: Int, schema: MAVLinkSchema): MAVLinkMessage {
     val msg = createLongCommandMessage(target, MAVLinkLongCommand.REQUEST_AUTOPILOT_CAPABILITIES, source, component, schema)
     msg.set("param1", true.int)
+    return msg
+}
+
+/**
+ * Create a new MAVLink 'Take-off Local' message
+ *
+ * @return a new MAVLink 'Long Command' message containing a 'Take-off Local' message
+ */
+fun createTakeOffLocalMessage(target: Int, source: Int, component: Int, schema: MAVLinkSchema, pitch: Float, ascendRate: Float, yaw: Float, x: Float, y: Float, z: Float): MAVLinkMessage {
+    val msg = createLongCommandMessage(target, MAVLinkLongCommand.NAV_TAKEOFF_LOCAL, source, component, schema)
+    msg.set("param1", pitch)
+    msg.set("param3", ascendRate)
+    msg.set("param4", yaw)
+    msg.set("param5", y)
+    msg.set("param6", x)
+    msg.set("param7", z)
+    return msg
+}
+
+/**
+ * Create a new MAVLink 'Loiter To Altitude' message
+ *
+ * @return a new MAVLink 'Long Command' message containing a 'Loiter To Altitude' message
+ */
+fun createLoiterToAltitudeMessage(target: Int, source: Int, component: Int, schema: MAVLinkSchema, altitude: Float): MAVLinkMessage {
+    val msg = createLongCommandMessage(target, MAVLinkLongCommand.NAV_TAKEOFF_LOCAL, source, component, schema)
+    msg.set("param1", false.int)
+    msg.set("param7", altitude)
     return msg
 }
