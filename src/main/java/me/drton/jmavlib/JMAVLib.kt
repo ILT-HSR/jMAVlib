@@ -16,6 +16,8 @@ enum class MAVLinkLongCommand(val value: Int) {
 
 private val Boolean.int get() = if (this) 1 else 0
 
+data class MAVLinkSystem(val id: Int, val component: Int)
+
 /**
  * Create a new MAVLink message
  *
@@ -26,29 +28,19 @@ private val Boolean.int get() = if (this) 1 else 0
  *
  * @return A new, empty MAVLink message
  */
-fun createMAVLinkMessage(name: String, system: Int, component: Int, schema: MAVLinkSchema) =
-        MAVLinkMessage(schema, name, system, component)
-
-/**
- * Create a new MAVLink message
- *
- * @param name The MAVLink ID of the message (e.g. "HEARTBEAT")
- * @param system The sender system ID
- * @param component The sender component ID
- * @param schema The name of the message schema
- *
- * @return A new, empty MAVLink message
- */
-fun createMAVLinkMessage(name: String, system: Int, component: Int, schema: String = "common") =
-        MAVLinkSchemaRegistry[schema]?.let { createMAVLinkMessage(name, system, component, it) }
+fun createMAVLinkMessage(name: String, sender: MAVLinkSystem, schema: MAVLinkSchema) =
+        MAVLinkMessage(schema, name, sender.id, sender.component)
 
 /**
  * Create a new MAVLink 'Heartbeat' message
  *
+ * @param sender The sender system
+ * @param schema The message schema
+ *
  * @return A new MAVLink 'Heartbeat' message
  */
-fun createHeartbeatMessage(system: Int, component: Int, schema: MAVLinkSchema): MAVLinkMessage {
-    val heartbeat = createMAVLinkMessage(MESSAGE_HEARTBEAT, system, component, schema)
+fun createHeartbeatMessage(sender: MAVLinkSystem, schema: MAVLinkSchema): MAVLinkMessage {
+    val heartbeat = createMAVLinkMessage(MESSAGE_HEARTBEAT, sender, schema)
 
     heartbeat.set("type", 6)
     heartbeat.set("autopilot", 0)
@@ -60,24 +52,25 @@ fun createHeartbeatMessage(system: Int, component: Int, schema: MAVLinkSchema): 
 }
 
 /**
- * Create a new MAVLink 'Heartbeat' message
- *
- * @return A new MAVLink 'Heartbeat' message
- */
-fun createHeartbeatMessage(system: Int, component: Int, schema: String = "common") =
-        MAVLinkSchemaRegistry[schema]?.let { createHeartbeatMessage(system, component, it) }
-
-/**
  * @internal
  *
  * Create a new MAVLink 'Long Command' message
+ *
+ * @param sender The sender system
+ * @param target The target system
+ * @param schema The message schema
+ * @param command The 'Long Command'
+ *
+ * @return A new, empty MAVLink 'Long Command' message
  */
-internal fun createLongCommandMessage(target: Int, command: MAVLinkLongCommand, source: Int, component: Int, schema: MAVLinkSchema): MAVLinkMessage {
-    val msg = createMAVLinkMessage(MESSAGE_COMMAND_LONG, source, component, schema)
-    msg.set("target_system", target)
+internal fun createLongCommandMessage(sender:MAVLinkSystem, target: MAVLinkSystem, schema: MAVLinkSchema, command: MAVLinkLongCommand): MAVLinkMessage {
+    val msg = createMAVLinkMessage(MESSAGE_COMMAND_LONG, sender, schema)
+
+    msg.set("target_system", target.id)
     msg.set("target_component", 0)
     msg.set("command", command.value)
     msg.set("confirmation", 0)
+
     return msg
 }
 
@@ -85,83 +78,110 @@ internal fun createLongCommandMessage(target: Int, command: MAVLinkLongCommand, 
  * @internal
  *
  * Create a new MAVLink 'Long Command' message for arming or disarming the vehicle
+ *
+ * @param sender The sender system
+ * @param target The target system
+ * @param schema The message schema
+ *
+ * @return A new MAVLink 'Long Command' containing a partially configured 'Arm/Disarm' command
  */
-internal fun newArmDisarmMessage(target: Int, source: Int, component: Int, schema: MAVLinkSchema) =
-        createLongCommandMessage(target, MAVLinkLongCommand.COMPONENT_ARM_DISARM, source, component, schema)
+internal fun newArmDisarmMessage(sender:MAVLinkSystem, target: MAVLinkSystem, schema: MAVLinkSchema) =
+        createLongCommandMessage(sender, target, schema, MAVLinkLongCommand.COMPONENT_ARM_DISARM)
 
 /**
  * Create a new MAVLink 'Arm' message
  *
- * @return a new MAVLink 'Long Command' message containing an 'Arm' message
+ * @param sender The sender system
+ * @param target The target system
+ * @param schema The message schema
+ *
+ * @return a new MAVLink 'Long Command' message containing an 'Arm' command
  */
-fun createArmMessage(target: Int, source: Int, component: Int, schema: MAVLinkSchema): MAVLinkMessage {
-    val msg = newArmDisarmMessage(target, source, component, schema)
+fun createArmMessage(sender: MAVLinkSystem, target: MAVLinkSystem, schema: MAVLinkSchema): MAVLinkMessage {
+    val msg = newArmDisarmMessage(sender, target, schema)
+
     msg.set("param1", true.int)
+
     return msg
 }
 
 /**
- * Create a new MAVLink 'Arm' message
- *
- * @return a new MAVLink 'Long Command' message containing an 'Arm' message
- */
-fun createArmMessage(target: Int, source: Int, component: Int, schema: String = "common") =
-        MAVLinkSchemaRegistry[schema]?.let { createArmMessage(target, source, component, it) }
-
-/**
  * Create a new MAVLink 'Disarm' message
  *
- * @return a new MAVLink 'Long Command' message containing an 'Disarm' message
+ * @param sender The sender system
+ * @param target The target system
+ * @param schema The message schema
+ *
+ * @return a new MAVLink 'Long Command' message containing a 'Disarm' command
  */
-fun createDisarmMessage(target: Int, source: Int, component: Int, schema: MAVLinkSchema): MAVLinkMessage {
-    val msg = newArmDisarmMessage(target, source, component, schema)
+fun createDisarmMessage(sender: MAVLinkSystem, target: MAVLinkSystem, schema: MAVLinkSchema): MAVLinkMessage {
+    val msg = newArmDisarmMessage(sender, target, schema)
+
     msg.set("param1", false.int)
+
     return msg
 }
-
-/**
- * Create a new MAVLink 'Disarm' message
- *
- * @return a new MAVLink 'Long Command' message containing an 'Disarm' message
- */
-fun createDisarmMessage(target: Int, source: Int, component: Int, schema: String = "common") =
-        MAVLinkSchemaRegistry[schema]?.let { createDisarmMessage(target, source, component, it) }
 
 /**
  * Create a new MAVLink 'Request Autopilot Capabilities' message
  *
- * @return a new MAVLink 'Long Command' message containing an 'Request Autopilot Capabilities' message
+ * @param sender The sender system
+ * @param target The target system
+ * @param schema The message schema
+ *
+ * @return a new MAVLink 'Long Command' message containing a 'Request Autopilot Capabilities' command
  */
-fun createRequestAutopilotCapabilitiesMessage(target: Int, source: Int, component: Int, schema: MAVLinkSchema): MAVLinkMessage {
-    val msg = createLongCommandMessage(target, MAVLinkLongCommand.REQUEST_AUTOPILOT_CAPABILITIES, source, component, schema)
+fun createRequestAutopilotCapabilitiesMessage(sender: MAVLinkSystem, target: MAVLinkSystem, schema: MAVLinkSchema): MAVLinkMessage {
+    val msg = createLongCommandMessage(sender, target, schema, MAVLinkLongCommand.REQUEST_AUTOPILOT_CAPABILITIES)
+
     msg.set("param1", true.int)
+
     return msg
 }
 
 /**
  * Create a new MAVLink 'Take-off Local' message
  *
- * @return a new MAVLink 'Long Command' message containing a 'Take-off Local' message
+ * @param sender The sender system
+ * @param target The target system
+ * @param schema The message schema
+ * @param pitch The desired pitch of the vehicle
+ * @param ascendRate The desired rate of ascend in m/s
+ * @param yaw The desired yaw of the vehicle
+ * @param x The desired X position of the vehicle
+ * @param y The desired Y position of the vehicle
+ * @param z The desired Z position of the vehicle
+ *
+ * @return a new MAVLink 'Long Command' message containing a 'Take-off Local' command
  */
-fun createTakeOffLocalMessage(target: Int, source: Int, component: Int, schema: MAVLinkSchema, pitch: Float, ascendRate: Float, yaw: Float, x: Float, y: Float, z: Float): MAVLinkMessage {
-    val msg = createLongCommandMessage(target, MAVLinkLongCommand.NAV_TAKEOFF_LOCAL, source, component, schema)
+fun createTakeOffLocalMessage(target: MAVLinkSystem, sender: MAVLinkSystem, schema: MAVLinkSchema, pitch: Float, ascendRate: Float, yaw: Float, x: Float, y: Float, z: Float): MAVLinkMessage {
+    val msg = createLongCommandMessage(sender, target, schema, MAVLinkLongCommand.NAV_TAKEOFF_LOCAL)
+
     msg.set("param1", pitch)
     msg.set("param3", ascendRate)
     msg.set("param4", yaw)
     msg.set("param5", y)
     msg.set("param6", x)
     msg.set("param7", z)
+
     return msg
 }
 
 /**
  * Create a new MAVLink 'Loiter To Altitude' message
  *
- * @return a new MAVLink 'Long Command' message containing a 'Loiter To Altitude' message
+ * @param sender The sender system
+ * @param target The target system
+ * @param schema The message schema
+ * @param altitude The desired altitude of the vehicle in m
+ *
+ * @return a new MAVLink 'Long Command' message containing a 'Loiter To Altitude' command
  */
-fun createLoiterToAltitudeMessage(target: Int, source: Int, component: Int, schema: MAVLinkSchema, altitude: Float): MAVLinkMessage {
-    val msg = createLongCommandMessage(target, MAVLinkLongCommand.NAV_TAKEOFF_LOCAL, source, component, schema)
+fun createLoiterToAltitudeMessage(target: MAVLinkSystem, sender: MAVLinkSystem, schema: MAVLinkSchema, altitude: Float): MAVLinkMessage {
+    val msg = createLongCommandMessage(sender, target, schema, MAVLinkLongCommand.NAV_TAKEOFF_LOCAL)
+
     msg.set("param1", false.int)
     msg.set("param7", altitude)
+
     return msg
 }
