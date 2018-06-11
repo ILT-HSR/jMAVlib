@@ -89,14 +89,14 @@ class MAVLinkSchema constructor(private val fContext: Context, private val fFile
                         when (node.tagName) {
                             NODE_FIELD -> {
                                 val typeString = node.getAttribute(ATTRIBUTE_TYPE).split("\\[".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-                                val name = node.getAttribute(ATTRIBUTE_NAME)
+                                val nodeName = node.getAttribute(ATTRIBUTE_NAME)
                                 val type = MAVLinkDataType.fromCType(typeString[0])
                                 val arrayDimension = if (typeString.size > 1) {
                                     Integer.parseInt(typeString[1].split("]".toRegex())[0])
                                 } else {
                                     -1
                                 }
-                                fields.add(MAVLinkField(type, arrayDimension, name))
+                                fields.add(MAVLinkField(type, arrayDimension, nodeName))
                             }
                             NODE_EXTENSIONS -> isExtension = true
                         }
