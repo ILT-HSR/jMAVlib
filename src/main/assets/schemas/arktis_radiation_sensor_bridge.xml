@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!-- ILT Mavlink Message Definition File -->
+<!-- implements messages to control custom payload for birdAI and minibAI -->
+<mavlink>
+  <include>standard.xml</include>
+  <enums>
+    <enum name="MAV_CMD">
+      <!-- ILT specific MAV_CMD_* commands -->
+      <entry name="MAV_CMD_TOGGLE_SENS_PAYLOAD" value="40001">
+        <description>Mission command to control a sensor payload</description>
+        <param index="1">start/stop sensing</param>
+        <param index="2">Empty</param>
+        <param index="3">Empty</param>
+        <param index="4">Empty</param>
+        <param index="5">Empty</param>
+        <param index="6">Empty</param>
+        <param index="7">Empty</param>
+      </entry>
+    </enum>
+  </enums>
+  <messages>
+    <message id="201" name="RADIATION_DATA">
+      <description>Arktis Radiation Detector Data</description>
+      <field type="float" name="timestamp" units="s">Time since system boot</field>
+      <field type="uint32_t" name="sensor_value" units="n/a">sensor value multiplied with denominator</field>
+      <field type="uint32_t" name="denominator" units="none">Denomitator for transmission</field>
+    </message>
+  </messages>
+</mavlink>
