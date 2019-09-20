@@ -83,36 +83,38 @@ class MAVLinkSchema constructor(private val fContext: Context, private val fFile
                 val name = msg.getAttribute(ATTRIBUTE_NAME)
                 val fields = ArrayList<MAVLinkField>()
 
-                var isExtension = false
-                msg.childNodes.forEach<Element> {node ->
-                    if (!isExtension) {
-                        when (node.tagName) {
-                            NODE_FIELD -> {
-                                val typeString = node.getAttribute(ATTRIBUTE_TYPE).split("\\[".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-                                val nodeName = node.getAttribute(ATTRIBUTE_NAME)
-                                val type = MAVLinkDataType.fromCType(typeString[0])
-                                val arrayDimension = if (typeString.size > 1) {
-                                    Integer.parseInt(typeString[1].split("]".toRegex())[0])
-                                } else {
-                                    -1
-                                }
-                                fields.add(MAVLinkField(type, arrayDimension, nodeName))
+                var extensionIndex = -1
+
+                msg.childNodes.forEach<Element> { node ->
+                    when (node.tagName) {
+                        NODE_FIELD -> {
+                            val typeString = node.getAttribute(ATTRIBUTE_TYPE).split("\\[".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                            val nodeName = node.getAttribute(ATTRIBUTE_NAME)
+                            val type = MAVLinkDataType.fromCType(typeString[0])
+                            val arrayDimension = if (typeString.size > 1) {
+                                Integer.parseInt(typeString[1].split("]".toRegex())[0])
+                            } else {
+                                -1
                             }
-                            NODE_EXTENSIONS -> isExtension = true
+                            fields.add(MAVLinkField(type, arrayDimension, nodeName))
                         }
+                        NODE_EXTENSIONS -> extensionIndex = fields.size
                     }
                 }
 
-                fields.sortWith(Comparator { lhs, rhs ->
+                extensionIndex = if (extensionIndex == -1) fields.size else extensionIndex
+
+                fields.subList(0, extensionIndex).sortWith(Comparator { lhs, rhs ->
                     when {
                         rhs.type.size > lhs.type.size -> 1
                         rhs.type.size < lhs.type.size -> -1
                         else -> 0
                     }
+
                 })
 
-                if (id in 0..255) {
-                    this[id, name] = MAVLinkMessageDefinition(id, name, fields.toTypedArray())
+                if (id in 0 until 16777215) {
+                    this[id, name] = MAVLinkMessageDefinition(id, name, fields.toTypedArray(), extensionIndex)
                 }
             }
         } catch (e: Exception) {
