@@ -2,14 +2,14 @@ package me.drton.jmavlib.log.ulog;
 
 import java.nio.ByteBuffer;
 
-/**
- * Created by ton on 29.09.15.
- */
-public class MessageInfo {
+public class MessageInfoMultiple {
     public final FieldFormat format;
     public final Object value;
+    public final boolean isContinued;
 
-    public MessageInfo(ByteBuffer buffer) {
+    public MessageInfoMultiple(ByteBuffer buffer) {
+        int isContinuedInt = buffer.get() & 0xFF;
+        isContinued = isContinuedInt == 1;
         int keyLen = buffer.get() & 0xFF;
         format = new FieldFormat(MessageFormat.getString(buffer, keyLen));
         value = format.getValue(buffer);
@@ -21,7 +21,7 @@ public class MessageInfo {
 
     @Override
     public String toString() {
-        return String.format("INFO: key=%s, value_type=%s, value=%s", format.name,
+        return String.format("INFO_MULTI: key=%s, value_type=%s, value=%s", format.name,
                              format.getFullTypeString(), value);
     }
 }
