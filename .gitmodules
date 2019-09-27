@@ -1,3 +1,0 @@
-[submodule "messages"]
-	path = src/main/assets/schemas
-	url = https://gitlab.dev.ifs.hsr.ch/ARCHE18/mavlink-messages
