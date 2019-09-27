@@ -1,0 +1,3 @@
+[submodule "src/main/assets/schemas"]
+	path = src/main/assets/schemas
+	url = ../hmi-mavlink-messages
